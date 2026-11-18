@@ -167,6 +167,22 @@ def image_for(docker, config, gpu, kit):
     return image
 
 
+def reuse_legacy_images(docker, config):
+    if config["namespace"] != "mujina":
+        return
+    names = run(*docker, "image", "ls", "--format", "{{.Repository}}:{{.Tag}}", capture=True).stdout.splitlines()
+    for key, prefix in (
+        ("base_image", "mujina-agent-lab:ubuntu24.04-agents-"),
+        ("sim_image", "mujina-agent-lab:ubuntu24.04-mujina-"),
+    ):
+        if config[key] != SETTINGS[key] or config[key] in names:
+            continue
+        candidates = sorted(name for name in names if name.startswith(prefix) and name.removeprefix(prefix).isdigit())
+        if candidates:
+            config[key] = candidates[-1]
+            print(f"既存イメージを再利用: {config[key]}")
+
+
 def seats(root):
     base = root / "students"
     if not base.is_dir():
@@ -397,6 +413,8 @@ def main():
             archive = getattr(args, "archive", None)
             if archive:
                 restore(root, archive.expanduser())
+            if args.action == "repair":
+                reuse_legacy_images(docker, config)
             runtime = install_runtime(root, config)
             kit = runtime / "kit"
             if args.action == "setup":
