@@ -6,7 +6,7 @@ Ubuntuで学生ごとのDocker環境を作り、同じ作業名で使い続け�
 
 | やりたいこと | どこで、何をするか |
 | --- | --- |
-| 起動中の環境を見る | Ubuntuの端末でリポジトリのフォルダーに入り、`./labctl doctor --html` |
+| コンテナの稼働状況を見る | Ubuntuの端末でリポジトリのフォルダーに入り、`./labctl doctor` |
 | コンテナの端末だけ閉じる | コンテナ内でプロンプトが出ているときに `exit` |
 | 学習やシミュレーターを止める | その処理を起動した端末で `Ctrl+C` |
 | コンテナを停止する | Ubuntu側で `sudo docker stop mujina-gpu0-student01`。自分のコンテナ名を指定 |
@@ -72,13 +72,7 @@ cd lab-workspace-kit
 ./labctl backup --output /mnt/backup/lab-students.tar.gz
 ```
 
-ブラウザーで稼働状況を見たい場合は、Ubuntuの端末で次を実行します。
-
-```bash
-./labctl doctor --html && xdg-open "$HOME/.cache/lab-workspace-kit/status.html"
-```
-
-HTMLには取得時刻、起動状態、使用中のCPU・RAM、GPU指定、TensorBoardの割り当て先が表示されます。状況を更新するときは、そのページの生成コマンドをもう一度実行します。HTMLはこのPCのユーザー専用キャッシュに保存されます。
+`./labctl doctor` は、停止中も含めたコンテナ一覧とポート、稼働中のコンテナのCPU・メモリ使用量を端末に表示します。Dockerの `STATUS` 列は `Up` が稼働中、`Exited` が停止中です。
 
 バックアップには学生のホームや認証ファイルが含まれる場合があります。ファイルは権限 `0600` で作成し、作業を保存・停止した状態で外部ストレージなどへ退避します。学習中のファイルの整合性が必要な場合は停止後に取ります。配布先やGitには置きません。
 

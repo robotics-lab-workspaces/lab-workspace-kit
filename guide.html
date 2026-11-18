@@ -311,15 +311,14 @@
           <div class="now">
             <div>
               <h2>今の稼働状況</h2>
-              <p>Ubuntuで <code>lab-workspace-kit</code> フォルダーを開き、このコマンドを実行します。起動・停止、CPUとRAM、GPU指定、TensorBoardのポートを一覧できます。</p>
+              <p>Ubuntuの端末で、クローンした <code>lab-workspace-kit</code> フォルダーから実行します。</p>
             </div>
             <div>
               <div class="cmd host">
-                <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">キットのフォルダーで</span><button class="copy" type="button" data-copy="c-status" aria-label="稼働状況を生成して開くコマンドをコピー">コピー</button></div>
-                <pre><code id="c-status">./labctl doctor --html &amp;&amp;
-xdg-open "$HOME/.cache/lab-workspace-kit/status.html"</code></pre>
+                <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">キットのフォルダーで</span><button class="copy" type="button" data-copy="c-status" aria-label="稼働状況を表示するコマンドをコピー">コピー</button></div>
+                <pre><code id="c-status">./labctl doctor</code></pre>
               </div>
-              <p>最新の状況を見るときは、コマンドをもう一度実行します。</p>
+              <p><code>STATUS</code> 欄の <code>Up</code> は稼働中、<code>Exited</code> は停止中です。ポートと、稼働中のCPU・メモリの使用量も表示されます。</p>
             </div>
           </div>
         </section>
@@ -498,7 +497,7 @@ fi</code></pre>
           </li>
           <li>控えたURLをUbuntuのブラウザーで開きます。</li>
         </ol>
-        <p class="small">URLの番号（ポート）はDockerが空きを選ぶため、コンテナごとに違い、停止・再開で変わることもあります。今の番号は<a href="#now">稼働状況のHTML</a>にも載ります。コンテナ内の番号は常に <code>6006</code> で、TensorBoardは1コンテナにつき1つです。TensorFlowが入っていないという通知は、起動できていれば気にしなくて構いません。</p>
+        <p class="small">URLの番号（ポート）はDockerが空きを選ぶため、コンテナごとに違い、停止・再開で変わることもあります。今の番号は<a href="#now">稼働状況</a>の <code>PORTS</code> 欄で確認できます。コンテナ内の番号は常に <code>6006</code> で、TensorBoardは1コンテナにつき1つです。TensorFlowが入っていないという通知は、起動できていれば気にしなくて構いません。</p>
         <h3>Macから開く</h3>
         <p><code>32771</code> をUbuntuで表示された番号に、<code>labadmin</code> と <code>lab-host.example.org</code> を管理者に指定された値に置き換えてMacで実行し、そのままMacのブラウザーで <code>http://localhost:16006</code> を開きます。</p>
         <div class="cmd mac">
@@ -510,7 +509,7 @@ fi</code></pre>
 
       <section id="check">
         <h2>状況を直接確認</h2>
-        <p>ふだんは冒頭の<a href="#now">稼働状況のHTML</a>で足ります。1項目ずつ確かめたいときは、Ubuntuホストで次を実行します。</p>
+        <p>ふだんは冒頭の<a href="#now">稼働状況の確認コマンド</a>で足ります。1項目ずつ確かめたいときは、Ubuntuホストで次を実行します。</p>
         <div class="quick">
           <div class="cmd host">
             <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">起動中のコンテナだけ</span><button class="copy" type="button" data-copy="c-ps" aria-label="起動中のコンテナ一覧のコマンドをコピー">コピー</button></div>
