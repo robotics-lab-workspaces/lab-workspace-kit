@@ -2,6 +2,18 @@
 
 Ubuntuで学生ごとのDocker環境を作り、同じ作業名で使い続けるためのキットです。共通の起動ファイルやコンテナを失ったときは、残っている作業データを見つけて接続し直します。[図入りの使い方](guide.html)
 
+## 今日使うもの
+
+| やりたいこと | どこで、何をするか |
+| --- | --- |
+| 起動中の環境を見る | Ubuntuの端末でリポジトリのフォルダーに入り、`./labctl doctor --html` |
+| コンテナの端末だけ閉じる | コンテナ内でプロンプトが出ているときに `exit` |
+| 学習やシミュレーターを止める | その処理を起動した端末で `Ctrl+C` |
+| コンテナを停止する | Ubuntu側で `sudo docker stop mujina-gpu0-student01`。自分のコンテナ名を指定 |
+| 同じ環境に戻る | Ubuntu側で `~/agent-lab/student-lab student01 --gpu 0` |
+
+コンテナを停止すると、内部の学習やTensorBoardも終了します。ファイルや、同じコンテナに追加したパッケージは残ります。
+
 ## 前提
 
 - Ubuntu 24.04（x86-64）、Python 3.12以上、Git、[Docker Engine](https://docs.docker.com/engine/install/ubuntu/) とローカルのDockerデーモン。Dockerへのアクセスには通常のユーザー権限か `sudo docker` を使用します。`labctl` 本体は作業ユーザーで起動します。
@@ -59,6 +71,14 @@ cd lab-workspace-kit
 ./labctl doctor
 ./labctl backup --output /mnt/backup/lab-students.tar.gz
 ```
+
+ブラウザーで稼働状況を見たい場合は、Ubuntuの端末で次を実行します。
+
+```bash
+./labctl doctor --html && xdg-open "$HOME/.cache/lab-workspace-kit/status.html"
+```
+
+HTMLには取得時刻、起動状態、使用中のCPU・RAM、GPU指定、TensorBoardの割り当て先が表示されます。状況を更新するときは、そのページの生成コマンドをもう一度実行します。HTMLはこのPCのユーザー専用キャッシュに保存されます。
 
 バックアップには学生のホームや認証ファイルが含まれる場合があります。ファイルは権限 `0600` で作成し、作業を保存・停止した状態で外部ストレージなどへ退避します。学習中のファイルの整合性が必要な場合は停止後に取ります。配布先やGitには置きません。
 
