@@ -1,14 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 project=/workspace/mujina_isaac_lab
-[[ -f "$project/scripts/rsl_rl/train.py" ]] || project=/opt/mujina-source/mujina_isaac_lab
-export PYTHONPATH="$project/source/mujina_isaac_lab${PYTHONPATH:+:$PYTHONPATH}"
-cd "$project"
 case ${1:-} in
-  preview) script=/opt/mujina-source/preview.py ;;
-  train)   script=scripts/rsl_rl/train.py ;;
+  preview)
+    script=/opt/mujina-source/preview.py
+    [[ -f "$project/scripts/rsl_rl/train.py" ]] || project=/opt/mujina-source/mujina_isaac_lab
+    ;;
+  train)
+    script=scripts/rsl_rl/train.py
+    if [[ ! -f "$project/$script" ]]; then
+      printf '学習用の %s/%s が見つかりません。作業フォルダーとバックアップを確認してください。\n' "$project" "$script" >&2
+      exit 2
+    fi
+    ;;
   *) printf '使い方: mujina-isaac preview|train [オプション]\n' >&2; exit 2 ;;
 esac
+export PYTHONPATH="$project/source/mujina_isaac_lab${PYTHONPATH:+:$PYTHONPATH}"
+cd "$project"
 shift
 python=/opt/mujina-isaac/bin/python
 kit_home="$HOME/.local/share/mujina-isaac"

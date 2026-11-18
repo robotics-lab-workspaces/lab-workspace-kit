@@ -6,7 +6,7 @@ if [[ -s "$HOME/.mujina-display" && -s "$HOME/.mujina-xauthority" ]]; then
   export XAUTHORITY="$HOME/.mujina-xauthority"
 fi
 if [[ -z ${DISPLAY:-} ]] || ! xdpyinfo >/dev/null 2>&1; then
-  printf 'Ubuntuデスクトップの端末から student-lab に入り直してください。\n' >&2
+  printf '画面に接続できません。UbuntuのXorgデスクトップから入り直してください。画面なしで試す場合は --headless を指定してください。\n' >&2
   exit 1
 fi
 exec "$@"

@@ -289,6 +289,7 @@
 
   <nav aria-label="このページの目次">
     <ul class="wrap">
+      <li><a href="#start-here">最初に</a></li>
       <li><a href="#now">今の稼働状況</a></li>
       <li><a href="#control">閉じる・止める・開き直す</a></li>
       <li><a href="#flow">流れ</a></li>
@@ -307,6 +308,11 @@
   <main>
     <div class="key">
       <div class="wrap">
+        <section id="start-here">
+          <h2>最初に選ぶ</h2>
+          <p><a href="#enter">セットアップ済みのUbuntuで使う</a>なら、管理者に自分の作業名と保存先を確認します。<br>
+          <a href="#setup">新しいUbuntuに入れる・環境を復旧する</a>手順は管理者向けです。</p>
+        </section>
         <section id="now">
           <div class="now">
             <div>
@@ -327,28 +333,12 @@
           <h2>閉じる・止める・開き直す</h2>
           <ul class="actions">
             <li>
-              <h3>コンテナを停止</h3>
-              <div class="cmd host">
-                <div class="cmd-head"><span class="where host">Ubuntuホスト</span><button class="copy" type="button" data-copy="c-stop" aria-label="コンテナを停止するコマンドをコピー">コピー</button></div>
-                <pre><code id="c-stop">sudo docker stop mujina-gpu0-student01</code></pre>
-              </div>
-              <p>自分のコンテナ名を指定します。中の学習やTensorBoardも止まるので、先に作業を保存します。</p>
-            </li>
-            <li>
-              <h3>開き直す</h3>
-              <div class="cmd host">
-                <div class="cmd-head"><span class="where host">Ubuntuホスト</span><button class="copy" type="button" data-copy="c-open" aria-label="コンテナを開き直すコマンドをコピー">コピー</button></div>
-                <pre><code id="c-open">~/agent-lab/student-lab student01 --gpu 0</code></pre>
-              </div>
-              <p>同じ作業名とGPU指定なら、同じコンテナ・追加パッケージ・データに戻ります。停止中なら起動してから入ります。</p>
-            </li>
-            <li>
               <h3>端末だけ閉じる</h3>
               <div class="cmd box">
                 <div class="cmd-head"><span class="where box">コンテナ内</span><button class="copy" type="button" data-copy="c-exit" aria-label="端末だけ閉じるコマンドをコピー">コピー</button></div>
                 <pre><code id="c-exit">exit</code></pre>
               </div>
-              <p>Ubuntuホストの行頭に戻ります。コンテナは起動したままです。</p>
+              <p>作業を終えて端末から出るだけなら、普段はこれを使います。Ubuntuの行頭に戻ってもコンテナは動き続けます。SSH接続を閉じると、その端末で実行中の学習は終了する場合があります。</p>
             </li>
             <li>
               <h3>処理を止める</h3>
@@ -358,12 +348,30 @@
               </div>
               <p>その端末の前面で動いている学習・再生・TensorBoardだけが止まります。</p>
             </li>
+            <li>
+              <h3>コンテナを停止</h3>
+              <div class="cmd host">
+                <div class="cmd-head"><span class="where host">Ubuntuホスト</span><button class="copy" type="button" data-copy="c-stop" aria-label="コンテナを停止するコマンドをコピー">コピー</button></div>
+                <pre><code id="c-stop">read -r -p "NAMES欄にある自分のコンテナ名: " container &amp;&amp;
+  test -n "$container" &amp;&amp; sudo docker stop -- "$container"</code></pre>
+              </div>
+              <p>先に作業を保存します。<a href="#now">稼働状況</a>の <code>NAMES</code> 欄から<strong>自分のコンテナ名</strong>を確認し、表示された入力欄に入力します。中の学習とTensorBoardも止まります。</p>
+            </li>
+            <li>
+              <h3>開き直す</h3>
+              <div class="cmd host">
+                <div class="cmd-head"><span class="where host">Ubuntuホスト</span><button class="copy" type="button" data-copy="c-open" aria-label="コンテナを開き直すコマンドをコピー">コピー</button></div>
+                <pre><code id="c-open">read -r -p "自分の作業名: " student &amp;&amp;
+  ~/agent-lab/student-lab "$student" --gpu 0</code></pre>
+              </div>
+              <p>これはGPU 0の例です。作業名を入力してEnterを押します。<a href="#names">前回と同じGPU指定</a>なら、追加パッケージや設定も同じ環境に戻ります。</p>
+            </li>
           </ul>
           <dl class="legend">
             <div><dt><span class="where host">Ubuntuホスト</span></dt><dd>ログインした直後のシェル。行頭は <code>labadmin@…$</code> など</dd></div>
             <div><dt><span class="where box">コンテナ内</span></dt><dd>行頭が <code>lab@mujina-gpu0-student01:/workspace$</code> のように表示されます</dd></div>
           </dl>
-          <p class="small"><code>student01</code> と <code>gpu0</code> は例です。自分の作業名とGPU指定に合わせた名前は<a href="#names">コンテナ名の表</a>で確認できます。コンテナを消して作り直す <code>docker rm</code> は<a href="#recreate">非常時の手順</a>でだけ使います。</p>
+          <p class="small">作業名は英小文字・数字・ハイフンで1〜24文字です。共用端末では管理者と決めた自分の作業名を使います。</p>
         </section>
       </div>
     </div>
@@ -392,16 +400,16 @@
         <h3 id="names">GPU指定とコンテナ名</h3>
         <div class="table-wrap">
           <table>
-            <thead><tr><th scope="col">モード</th><th scope="col">入るコマンドの末尾</th><th scope="col">コンテナ名（停止のときに使う）</th></tr></thead>
+            <thead><tr><th scope="col">モード</th><th scope="col">起動コマンドの例</th><th scope="col">コンテナ名（停止のときに使う）</th></tr></thead>
             <tbody>
-              <tr><th scope="row">GPU 0</th><td><code>--gpu 0</code></td><td><code>mujina-gpu0-student01</code></td></tr>
-              <tr><th scope="row">GPU 1</th><td><code>--gpu 1</code></td><td><code>mujina-gpu1-student01</code></td></tr>
-              <tr><th scope="row">GPU 2枚とも</th><td><code>--gpu all</code></td><td><code>mujina-gpuall-student01</code></td></tr>
-              <tr><th scope="row">通常版（GPUなし）</th><td>何も付けない</td><td><code>mujina-student-student01</code></td></tr>
+              <tr><th scope="row">GPU 0</th><td><code>~/agent-lab/student-lab 作業名 --gpu 0</code></td><td><code>mujina-gpu0-student01</code></td></tr>
+              <tr><th scope="row">GPU 1</th><td><code>~/agent-lab/student-lab 作業名 --gpu 1</code></td><td><code>mujina-gpu1-student01</code></td></tr>
+              <tr><th scope="row">ホストの全GPU</th><td><code>~/agent-lab/student-lab 作業名 --gpu all</code></td><td><code>mujina-gpuall-student01</code></td></tr>
+              <tr><th scope="row">通常版（GPUなし）</th><td><code>~/agent-lab/student-lab 作業名</code></td><td><code>mujina-student-student01</code></td></tr>
             </tbody>
           </table>
         </div>
-        <p class="small">MuJinaの学習と再生はGPU版で行います。モードごとに別のコンテナになりますが、<code>/workspace</code> の中身は共通です。</p>
+        <p class="small">表の「作業名」は自分の名前に置き換えます。同じ作業名なら <code>/workspace</code> のコード・ログ・モデルは共通です。ホーム・認証設定・本体に追加したパッケージはモードごとに別です。<code>--gpu all</code> は全GPUを見せる指定です。1回の学習で複数枚を使うには別の分散学習設定が必要です。</p>
         <details>
           <summary>フォルダーの場所を確かめる</summary>
           <div class="fold">
@@ -410,15 +418,8 @@
           </div>
         </details>
         <details>
-          <summary>コンテナを再起動して入り直す</summary>
-          <div class="fold">
-            <p>停止と同じく、中の学習・シミュレーター・TensorBoardは終了します。追加したパッケージ、作業ファイル、設定は残ります。</p>
-            <div class="cmd host">
-              <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">GPU 0版を再起動して入る</span><button class="copy" type="button" data-copy="c-restart" aria-label="再起動して入り直すコマンドをコピー">コピー</button></div>
-              <pre><code id="c-restart">sudo docker restart mujina-gpu0-student01 &amp;&amp;
-~/agent-lab/student-lab student01 --gpu 0</code></pre>
-            </div>
-          </div>
+          <summary>再起動するとき</summary>
+          <div class="fold"><p><a href="#control">自分のコンテナを停止</a>し、以前と同じ作業名とGPU指定で開き直します。停止前に学習結果を保存してください。</p></div>
         </details>
       </section>
 
@@ -445,7 +446,7 @@
         <p>RT公式の学習済み歩行ポリシー（動かし方を決めるモデル）を読み込み、Isaac Sim（ロボットのシミュレーター）でMuJina 1体に前進を指示します。スクリプトが見つからないときは、同じ作業名で入り直します。</p>
 
         <h3>自分の .pt を再生する</h3>
-        <p>同じコンテナで学習したRough-MuJinaの結果から最新のチェックポイントを探し、再生スクリプトの末尾に渡します。コピーして、まとめて貼り付けます。</p>
+        <p>同じ作業名で学習したRough-MuJinaの結果から最新のチェックポイントを探し、再生スクリプトの末尾に渡します。コピーして、まとめて貼り付けます。</p>
         <div class="cmd box">
           <div class="cmd-head"><span class="where box">コンテナ内</span><span class="what">自分のモデルを画面付きで再生</span><button class="copy" type="button" data-copy="c-play-own" aria-label="自分のモデルの再生コマンドをコピー">コピー</button></div>
           <pre><code id="c-play-own">logs=/workspace/mujina_isaac_lab/logs/rsl_rl/mujina_rough
@@ -571,10 +572,10 @@ sudo docker exec mujina-gpu0-student01 sh -c '
 
       <section id="setup">
         <h2>セットアップ・復旧・バックアップ</h2>
-        <p>マシンを最初に準備するときと、環境が壊れたときに使います。ここのコマンドはすべてUbuntuホストで実行します。</p>
+        <p>管理者が公開キットを新しく導入・復旧するときの手順です。Ubuntu側で、キットをクローンしたフォルダーから実行します。研究室の既存Compose環境に適用する前に、別の保存先と別の名前空間で試験してください。</p>
 
         <h3>新規セットアップ</h3>
-        <p>Ubuntu 24.04に、Docker Engine、Python 3.12以上、Gitを用意しておきます。GPU版の条件は<a href="README.md">README</a>にあります。</p>
+        <p>Ubuntu 24.04で <code>python3 --version</code> が3.12以上、<code>git --version</code> が表示され、<code>sudo docker version</code> でサーバーが応答することを確かめます。GPU版の条件は<a href="README.md">README</a>にあります。</p>
         <div class="cmd host">
           <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">取得して対話メニューを開く</span><button class="copy" type="button" data-copy="c-setup" aria-label="セットアップのコマンドをコピー">コピー</button></div>
           <pre><code id="c-setup">git clone https://github.com/robotics-lab-workspaces/lab-workspace-kit.git &amp;&amp;
@@ -582,10 +583,10 @@ cd lab-workspace-kit &amp;&amp;
 ./labctl</code></pre>
         </div>
         <p>メニューで「セットアップ」を選びます。通常版だけなら <code>./labctl setup</code> でも作れます。</p>
-        <details>
-          <summary>GPU版を作る・プロキシのあるネットワークで作る</summary>
+        <details open>
+          <summary>Isaacを使う場合のGPU版セットアップ</summary>
           <div class="fold">
-            <p>GPU版は、<a href="https://docs.isaacsim.omniverse.nvidia.com/5.1.0/common/licenses-isaac-sim.html">NVIDIAの条件</a>を読み、同意する場合に実行します。初回のビルドには十分な空きディスクと時間が必要です。</p>
+            <p>GPU版は、<a href="https://docs.isaacsim.omniverse.nvidia.com/5.1.0/common/licenses-isaac-sim.html">NVIDIAの条件</a>を読み、同意する場合に実行します。先に <code>nvidia-smi -L</code> と <code>nvidia-ctk cdi list</code> で認識を確認します。GUIを使う場合はXorgのUbuntuデスクトップから初回のコンテナを作ります。初回ビルドには空きディスクと時間が必要です。</p>
             <div class="cmd host">
               <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">キットのフォルダーで・GPU版</span><button class="copy" type="button" data-copy="c-setup-gpu" aria-label="GPU版セットアップのコマンドをコピー">コピー</button></div>
               <pre><code id="c-setup-gpu">./labctl --accept-isaac-eula setup --gpu</code></pre>
@@ -606,7 +607,7 @@ cd lab-workspace-kit &amp;&amp;
             <tbody>
               <tr><td><code>students/&lt;作業名&gt;/workspace</code></td><td>コード・学習ログ・チェックポイント。通常版とGPU版で共通</td></tr>
               <tr><td>同じ作業名の <code>state</code> / <code>state-gpu*</code></td><td>各モードのコンテナのホーム（<code>/home/lab</code>）。設定・認証など</td></tr>
-              <tr><td>コンテナ本体</td><td>手動で <code>apt</code> などで追加したもの。本体を失ったら、作業メモをもとに入れ直す</td></tr>
+              <tr><td>コンテナ本体</td><td>管理者が追加したパッケージなど。OSパッケージは管理者のDockerfile、Python依存は自分の仮想環境で管理します。</td></tr>
             </tbody>
           </table>
         </div>
@@ -623,50 +624,48 @@ cd lab-workspace-kit &amp;&amp;
             <p>コンテナは消さずに、未使用の作業名で入ります。元の環境には、元の作業名で戻れます。</p>
             <div class="cmd host">
               <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">別の新しい作業名を作る</span><button class="copy" type="button" data-copy="c-fresh" aria-label="別の作業名で入るコマンドをコピー">コピー</button></div>
-              <pre><code id="c-fresh">~/agent-lab/student-lab student01-clean --gpu 0</code></pre>
+              <pre><code id="c-fresh">read -r -p "未使用の作業名: " student &amp;&amp;
+  ~/agent-lab/student-lab "$student" --gpu 0</code></pre>
             </div>
           </div>
         </details>
         <details id="recreate">
-          <summary>非常時：同じ作業名のままコンテナ本体を作り直す（docker rm）</summary>
-          <div class="fold">
-            <p class="caution"><strong>コンテナが壊れて入れないときだけ使います。</strong>コンテナに直接入れた <code>apt</code> パッケージと、<code>/workspace</code>・<code>/home/lab</code> の外に置いたファイルは消えます。実行前に <code>sudo docker ps -a</code> で自分のコンテナ名を確かめます。</p>
-            <div class="cmd host">
-              <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">自分のGPU 0版だけを作り直す</span><button class="copy" type="button" data-copy="c-recreate" aria-label="コンテナ本体を作り直すコマンドをコピー">コピー</button></div>
-              <pre><code id="c-recreate">sudo docker stop mujina-gpu0-student01 &amp;&amp;
-sudo docker rm mujina-gpu0-student01 &amp;&amp;
-~/agent-lab/student-lab student01 --gpu 0</code></pre>
-            </div>
-            <p><code>/workspace</code> のコード・学習ログと、同じモードの <code>/home/lab</code> の設定・認証はUbuntu側に保存されているので、そのまま引き継がれます。</p>
-          </div>
+          <summary>コンテナ本体を作り直すとき</summary>
+          <div class="fold"><p>先にバックアップを作り、管理担当者と対象を確認します。コードと学習結果は作業フォルダー、設定は同じGPUモードのホームから引き継げます。コンテナ本体だけに置いたファイルや追加パッケージは作り直すと消えます。</p></div>
         </details>
 
         <h3>バックアップ</h3>
         <div class="cmd host">
           <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">キットのフォルダーで・学生の作業データをまとめて保存</span><button class="copy" type="button" data-copy="c-backup" aria-label="バックアップのコマンドをコピー">コピー</button></div>
-          <pre><code id="c-backup">./labctl backup --output /mnt/backup/lab-students.tar.gz</code></pre>
+          <pre><code id="c-backup">./labctl backup</code></pre>
         </div>
         <p class="caution"><strong>認証ファイルが含まれることがあります。</strong>ファイルの権限は <code>0600</code>（本人だけが読み書きできる設定）にし、配布先やGitには置きません。学習中のファイルまで正確に残したいときは、作業を保存して停止してから取り、外部ストレージへ移します。</p>
-        <details>
+        <p>保存先の表示を控えます。外部を指すリンクや特殊ファイルは除外名が表示されます。MuJoCoのリンクは起動時に再生成されます。Pythonの仮想環境が必要なら依存ファイルから作り直します。</p>
+        <details open>
           <summary>バックアップから空の保存先へ復元する</summary>
           <div class="fold">
-            <p>同じマシンに既存の環境があるときは、例のように名前空間を分けます。</p>
-            <div class="cmd host">
-              <div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">キットのフォルダーで・アーカイブから復元</span><button class="copy" type="button" data-copy="c-restore" aria-label="バックアップから復元するコマンドをコピー">コピー</button></div>
-              <pre><code id="c-restore">./labctl --root "$HOME/recovered-lab" --namespace recovered repair --archive /mnt/backup/lab-students.tar.gz</code></pre>
-            </div>
+            <p>元の環境と共存させるため、空の <code>~/recovered-lab</code> と別の名前空間 <code>recovered</code> を使います。バックアップ時に控えた <code>.tar.gz</code> のパスを入力します。</p>
+            <div class="cmd host"><div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">CPU版のバックアップを復元</span><button class="copy" type="button" data-copy="c-restore">コピー</button></div><pre><code id="c-restore">read -r -p "バックアップの絶対パス: " archive &amp;&amp;
+  ./labctl --root "$HOME/recovered-lab" --namespace recovered repair --archive "$archive"</code></pre></div>
+            <p>GPU版を含む場合は<a href="https://docs.isaacsim.omniverse.nvidia.com/5.1.0/common/licenses-isaac-sim.html">NVIDIAの条件</a>を読み、同意する場合に次を使います。</p>
+            <div class="cmd host"><div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">GPU版を含むバックアップを復元</span><button class="copy" type="button" data-copy="c-restore-gpu">コピー</button></div><pre><code id="c-restore-gpu">read -r -p "バックアップの絶対パス: " archive &amp;&amp;
+  ./labctl --root "$HOME/recovered-lab" --namespace recovered --accept-isaac-eula repair --archive "$archive"</code></pre></div>
+            <p>最後に「起動ファイル」が表示されたら、<strong>復元先の</strong>ランチャーで入り直します。次はCPU版の例です。GPU版なら同じ作業名で、以前の指定（例 <code>--gpu 0</code>）を末尾に付けます。コンテナ内で <code>ls /workspace</code> を実行し、ファイルを確認します。</p>
+            <div class="cmd host"><div class="cmd-head"><span class="where host">Ubuntuホスト</span><span class="what">復元した環境を開く</span><button class="copy" type="button" data-copy="c-restore-open">コピー</button></div><pre><code id="c-restore-open">read -r -p "復元した作業名: " student &amp;&amp;
+  ~/recovered-lab/student-lab "$student"</code></pre></div>
+            <p>「保存データは展開済み」と表示された場合は原因を直し、同じ保存先と名前空間を指定して <code>--archive</code> を外した <code>repair</code> を実行します。</p>
           </div>
         </details>
       </section>
 
       <section id="protected">
-        <h2>守る範囲</h2>
-        <p>編集するのは自分の <code>/workspace</code> の中だけです。停止や作り直しは、<code>sudo docker ps -a</code> で自分のコンテナ名を確かめてから指定します。</p>
+        <h2>共用マシンでのルール</h2>
+        <p>編集は自分の <code>/workspace</code> で行います。Ubuntuのアカウントを共用する場合、作業名を分けても利用者ごとのアクセス制限はかかりません。停止前は<a href="#now">稼働状況</a>で自分の名前を確認します。</p>
         <dl class="rules">
           <dt>ほかの人の環境</dt>
           <dd><code>~/agent-lab/students/他の作業名/</code> のコード・学習ログ・認証と、ほかの人のコンテナには触りません。停止や削除も本人に任せます。</dd>
           <dt>共通の起動設定</dt>
-          <dd><code>~/agent-lab/student-lab</code>、<code>~/agent-lab/compose*.yaml</code>、<code>~/agent-lab/mujina-image/</code> は全員の環境に関わります。実験コードは、自分の作業フォルダーにあるコピーを編集します。</dd>
+          <dd><code>~/agent-lab/student-lab</code> と <code>~/agent-lab/.lab-kit/</code> は全員の環境に関わります。実験コードは、自分の作業フォルダーにあるコピーを編集します。</dd>
           <dt>UbuntuとDockerの管理領域</dt>
           <dd><code>/etc/docker/</code>、<code>/etc/cdi/</code>、<code>/var/lib/docker/</code>、GPUドライバー、ネットワーク設定は管理担当者が扱います。Docker全体を消す・止めるコマンドや <code>docker system prune</code> は使いません。</dd>
           <dt>実機と認証情報</dt>
@@ -686,7 +685,7 @@ sudo docker rm mujina-gpu0-student01 &amp;&amp;
         <details>
           <summary>Isaacのウィンドウが出ない</summary>
           <div class="fold">
-            <p>Ubuntuデスクトップのターミナルから <code>student-lab</code> で入り直し、<code>mujina-isaac preview</code> を実行します。初回は描画キャッシュの準備に時間がかかります。</p>
+            <p>UbuntuのXorgデスクトップから入り直し、<code>mujina-isaac preview</code> を実行します。画面なしでの確認は <code>mujina-isaac preview --headless --steps 3</code> です。初回作成時に画面用の接続先がなかった場合は、管理担当者にコンテナ構成の確認を依頼してください。</p>
           </div>
         </details>
         <details>
@@ -713,7 +712,7 @@ cat /sys/fs/cgroup/pids.max /sys/fs/cgroup/pids.events</code></pre>
             </div>
           </div>
         </details>
-        <p class="small">作業メモは自分の <code>/workspace/WORKLOG.md</code> に残します。共有ルールは <code>/workspace/AGENTS.md</code>、環境の再ビルド手順は <code>~/agent-lab/mujina-image/README.md</code> にあります。</p>
+        <p class="small">作業メモは自分の <code>/workspace/WORKLOG.md</code> に残します。共有ルールは <code>/workspace/AGENTS.md</code>、環境の再ビルド手順は <a href="README.md">README</a> にあります。</p>
       </section>
 
       <section id="native">

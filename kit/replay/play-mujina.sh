@@ -17,6 +17,13 @@ if [[ $# -gt 0 && $1 != -* ]]; then
   project=/workspace/mujina_isaac_lab
   script=(scripts/rsl_rl/play.py --task Isaac-Velocity-Rough-Mujina-Play-v0
     --num_envs 1 --real-time --checkpoint "$checkpoint")
+else
+  for argument in "$@"; do
+    if [[ $argument == *.pt ]]; then
+      printf '自分のチェックポイントは最初の引数に指定してください。例: bash play-mujina.sh model.pt --headless\n' >&2
+      exit 2
+    fi
+  done
 fi
 
 mkdir -p -- "$kit_home"

@@ -11,12 +11,14 @@ import io
 import json
 import os
 from pathlib import Path
+import posixpath
 import re
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+import zlib
 
 
 SOURCE = Path(__file__).resolve().parent
@@ -34,6 +36,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 exec python3 "$root/.lab-kit/current/labctl" --root "$root" open "$@"
 """
 LABEL = "io.github.robotics-lab-workspaces.managed"
+EULA_URL = "https://docs.isaacsim.omniverse.nvidia.com/5.1.0/common/licenses-isaac-sim.html"
 
 
 def run(*args, capture=False, check=True, input=None):
@@ -171,7 +174,7 @@ def image_for(docker, config, gpu, kit):
     return image
 
 
-def reuse_legacy_images(docker, config):
+def reuse_legacy_images(docker, config, args):
     if config["namespace"] != "mujina":
         return
     names = run(*docker, "image", "ls", "--format", "{{.Repository}}:{{.Tag}}", capture=True).stdout.splitlines()
@@ -179,11 +182,12 @@ def reuse_legacy_images(docker, config):
         ("base_image", "mujina-agent-lab:ubuntu24.04-agents-"),
         ("sim_image", "mujina-agent-lab:ubuntu24.04-mujina-"),
     ):
-        if config[key] != SETTINGS[key] or config[key] in names:
+        if getattr(args, key) is not None or config[key] != SETTINGS[key] or config[key] in names:
             continue
-        candidates = sorted(name for name in names if name.startswith(prefix) and name.removeprefix(prefix).isdigit())
+        candidates = [name for name in names if name.startswith(prefix) and name.removeprefix(prefix).isascii()
+                      and name.removeprefix(prefix).isdigit()]
         if candidates:
-            config[key] = candidates[-1]
+            config[key] = max(candidates, key=lambda name: int(name.removeprefix(prefix)))
             print(f"既存イメージを再利用: {config[key]}")
 
 
@@ -233,8 +237,7 @@ def bind(source, target, readonly=False):
     return out.getvalue().rstrip("\r\n")
 
 
-def create(docker, config, name, workspace, state, gpu, kit):
-    image = image_for(docker, config, gpu, kit)
+def create(docker, name, workspace, state, gpu, image):
     options = [
         *docker, "create", "--name", name, "--hostname", name, "--init",
         "--restart", "unless-stopped", "--security-opt", "no-new-privileges:true",
@@ -248,8 +251,6 @@ def create(docker, config, name, workspace, state, gpu, kit):
         if value := os.environ.get(key) or os.environ.get(key.upper()) or default:
             options.extend(("--env", f"{key}={value}", "--env", f"{key.upper()}={value}"))
     if gpu:
-        if not config["accept_isaac_eula"]:
-            raise ValueError("Isaac Simのライセンスを確認し、同意する場合は --accept-isaac-eula を指定してください。")
         options.extend(("--device", f"nvidia.com/gpu={gpu}", "--shm-size", "1g",
                         "--publish", "127.0.0.1::6006", "--env", "OMNI_KIT_ACCEPT_EULA=YES",
                         "--env", "ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST"))
@@ -259,28 +260,43 @@ def create(docker, config, name, workspace, state, gpu, kit):
     run(*options, image, "sleep", "infinity", capture=True)
 
 
-def prepare(docker, config, directory, gpu, kit, *, start=False):
+def workspace_paths(config, directory, gpu):
     workspace = directory / "workspace"
     state = directory / (f"state-gpu{gpu}" if gpu else "state")
     name = f"{config['namespace']}-{'gpu' + gpu if gpu else 'student'}-{directory.name}"
+    return workspace, state, name
+
+
+def prepare(docker, config, directory, gpu, kit, *, start=False):
+    workspace, state, name = workspace_paths(config, directory, gpu)
     if any(path.is_symlink() for path in (directory, workspace, state)):
         raise ValueError(f"作業データのパスにシンボリックリンクがあります: {directory}")
     current = existing(docker, name, workspace, state)
     if current is None:
+        if gpu and not config["accept_isaac_eula"]:
+            action = "setup --gpu" if start else "repair"
+            raise ValueError(f"Isaac Simの条件 {EULA_URL} を確認し、同意する場合は "
+                             f"キットのフォルダーで ./labctl --accept-isaac-eula {action} を実行してください。")
+        image = image_for(docker, config, gpu, kit)
         workspace.mkdir(parents=True, exist_ok=True)
+        new_state = not state.exists()
         state.mkdir(mode=0o700, parents=True, exist_ok=True)
+        try:
+            create(docker, name, workspace, state, gpu, image)
+        except subprocess.CalledProcessError:
+            if new_state and not any(state.iterdir()):
+                state.rmdir()
+            raise
+        print(f"作成: {name}")
     elif not workspace.is_dir() or not state.is_dir():
         raise ValueError(f"{name} の作業データが見つかりません。バックアップを確認してください。")
+    else:
+        print(f"引き継ぎ: {name}")
     for folder in (directory, workspace, state):
         target = folder / "AGENTS.md"
         if not target.exists() and not target.is_symlink():
             with target.open("x") as handle:
                 handle.write((kit / "AGENTS.md").read_text())
-    if current is None:
-        create(docker, config, name, workspace, state, gpu, kit)
-        print(f"作成: {name}")
-    else:
-        print(f"引き継ぎ: {name}")
     if start:
         if gpu:
             run("bash", str(kit / "prepare-display"), str(state))
@@ -297,7 +313,7 @@ def prepare(docker, config, directory, gpu, kit, *, start=False):
                         shutil.copy2(helper, destination)
             port = run(*docker, "port", name, "6006/tcp", capture=True, check=False)
             if port.returncode == 0 and port.stdout.strip():
-                print(f"TensorBoard: http://{port.stdout.strip().splitlines()[0]}")
+                print(f"TensorBoard: http://{port.stdout.strip().splitlines()[0]}（コンテナ内で mujina-tensorboard を実行）")
     return name
 
 
@@ -309,38 +325,85 @@ def backup(root, destination):
     if output.is_relative_to(source.resolve()):
         raise ValueError("バックアップ先は students の外に指定してください。")
     output.parent.mkdir(parents=True, exist_ok=True)
-    with open_private(output) as handle:
-        try:
+    fd, path = tempfile.mkstemp(prefix=f".{output.name}.", dir=output.parent)
+    temporary = Path(path)
+    try:
+        with os.fdopen(fd, "wb") as handle:
             with tarfile.open(fileobj=handle, mode="w:gz") as archive:
-                archive.add(source, arcname="students", filter=lambda member: (
-                    None if Path(member.name).name in (".mujina-xauthority", ".mujina-display") else member))
+                archive.add(source, arcname="students", filter=backup_member)
+            handle.flush()
+            os.fsync(handle.fileno())
+        # Reserve the name only after compression, without replacing an existing backup.
+        os.close(os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600))
+        try:
+            temporary.replace(output)
         except BaseException:
             output.unlink(missing_ok=True)
             raise
+    finally:
+        temporary.unlink(missing_ok=True)
     print(f"バックアップ: {output}")
 
 
-def open_private(path):
-    return os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb")
+def inside_students(path):
+    parts = Path(path).parts
+    return bool(parts) and parts[0] == "students" and ".." not in parts
 
 
-def restore(root, source):
+def backup_member(member):
+    if Path(member.name).name in (".mujina-xauthority", ".mujina-display"):
+        return None
+    if member.issym():
+        target = posixpath.normpath(posixpath.join(posixpath.dirname(member.name), member.linkname))
+        if not inside_students(target):
+            print(f"保存・復元の対象外（外部へのリンク）: {member.name!r}", file=sys.stderr)
+            return None
+    elif not (member.isfile() or member.isdir() or member.islnk()):
+        print(f"保存・復元の対象外（特殊ファイル）: {member.name!r}", file=sys.stderr)
+        return None
+    return member
+
+
+def restore_member(member, folder):
+    member = backup_member(member)
+    if member is None:
+        return None
+    try:
+        safe = tarfile.data_filter(member, folder)
+    except (tarfile.AbsoluteLinkError, tarfile.LinkOutsideDestinationError):
+        if not member.issym():
+            raise
+        print(f"復元の対象外（外部へのリンク）: {member.name!r}", file=sys.stderr)
+        return None
+    return safe.replace(mode=0o700) if safe.isdir() else safe
+
+
+def restore(root, source, docker, config):
     destination = root / "students"
     if destination.is_symlink() or (destination.exists() and (not destination.is_dir() or any(destination.iterdir()))):
         raise ValueError("既存の students にバックアップは上書きしません。空の --root を指定してください。")
     with tempfile.TemporaryDirectory(dir=root) as folder, tarfile.open(source, "r:gz") as archive:
-        for member in archive.getmembers():
-            path = Path(member.name)
-            if not path.parts or path.parts[0] != "students" or ".." in path.parts:
+        members = archive.getmembers()
+        for member in members:
+            if not inside_students(member.name):
                 raise ValueError("students のバックアップではないか、安全に展開できないパスがあります。")
-            if member.islnk():
-                target = Path(member.linkname)
-                if not target.parts or target.parts[0] != "students" or ".." in target.parts:
-                    raise ValueError("バックアップ内のハードリンクが students の外を指しています。")
-        archive.extractall(folder, filter="data")
-        staging = Path(folder) / "students"
+            if member.islnk() and not inside_students(member.linkname):
+                raise ValueError("バックアップ内のハードリンクが students の外を指しています。")
+        archive.extractall(folder, members=members, filter=restore_member)
+        stage_root = Path(folder)
+        staging = stage_root / "students"
         if staging.is_symlink() or not staging.is_dir():
             raise ValueError("バックアップに students ディレクトリがありません。")
+        staging.chmod(0o700)
+        for directory, modes in seats(stage_root):
+            for gpu in modes:
+                if gpu and not config["accept_isaac_eula"]:
+                    raise ValueError(f"GPU版を含むバックアップです。{EULA_URL} を確認し、同意する場合は "
+                                     "--accept-isaac-eula を repair の前に指定してください。")
+                workspace, home, name = workspace_paths(config, destination / directory.name, gpu)
+                current = existing(docker, name, workspace, home)
+                if current and current["Running"]:
+                    raise ValueError(f"{name} が稼働中です。停止してから復元するか、別の --namespace を指定してください。")
         staging.replace(destination)
 
 
@@ -357,6 +420,7 @@ def arguments():
     setup.add_argument("--gpu", action="store_true", help="GPU版イメージもビルド")
     repair = subs.add_parser("repair", help="既存の作業設定を検出し、欠けた環境を修復")
     repair.add_argument("--archive", type=Path, help="空の保存先へ students のバックアップを復元")
+    parser.set_defaults(output=None)
     save = subs.add_parser("backup", help="学生用データのローカルバックアップを保存")
     save.add_argument("--output", type=Path)
     launch = subs.add_parser("open", help="学生環境に入る（student-lab が使用）")
@@ -387,7 +451,7 @@ def main():
     needs_gpu = getattr(args, "gpu", False) if args.action == "setup" else (
         args.action == "repair" and any(gpu for _, modes in seats(root) for gpu in modes))
     if args.interactive and needs_gpu and not config["accept_isaac_eula"]:
-        print("NVIDIAのライセンス: https://docs.isaacsim.omniverse.nvidia.com/5.1.0/common/licenses-isaac-sim.html")
+        print(f"NVIDIAのライセンス: {EULA_URL}")
         config["accept_isaac_eula"] = input("内容を確認して同意済みですか？ [y/N] ").strip().lower() == "y"
         if not config["accept_isaac_eula"]:
             raise ValueError("GPU版の操作は、ライセンス確認後に実行してください。")
@@ -412,7 +476,8 @@ def main():
             run("nvidia-ctk", "cdi", "list", check=False)
         return
     if args.action == "backup":
-        backup(root, args.output)
+        with locked(root):
+            backup(root, args.output)
         return
     if args.action == "open" and (not NAME.fullmatch(args.student) or (args.gpu and not GPU.fullmatch(args.gpu))):
         raise ValueError("作業名またはGPU指定が不正です。例: student-lab student01 --gpu 0")
@@ -422,22 +487,30 @@ def main():
             name = prepare(docker, config, root / "students" / args.student, args.gpu, SOURCE / "kit", start=True)
         else:
             archive = getattr(args, "archive", None)
-            if archive:
-                restore(root, archive.expanduser())
-            if args.action == "repair":
-                reuse_legacy_images(docker, config)
-            runtime = install_runtime(root, config)
-            kit = runtime / "kit"
+            kit = SOURCE / "kit"
             if args.action == "setup":
                 image_for(docker, config, "", kit)
                 if getattr(args, "gpu", False):
                     image_for(docker, config, "all", kit)
             else:
+                reuse_legacy_images(docker, config, args)
+                if archive:
+                    restore(root, archive.expanduser(), docker, config)
+                failures = 0
                 for directory, modes in seats(root):
                     if not modes:
                         print(f"発見: {directory.name}（workspaceのみ）")
                     for gpu in modes:
-                        prepare(docker, config, directory, gpu, kit)
+                        try:
+                            prepare(docker, config, directory, gpu, kit)
+                        except (ValueError, OSError, subprocess.CalledProcessError) as error:
+                            _, _, name = workspace_paths(config, directory, gpu)
+                            print(f"{name}: {error_detail(error)}", file=sys.stderr)
+                            failures += 1
+                if failures:
+                    retry = " 保存データは展開済みです。原因を直し、--archive を外して同じ --root と --namespace で再実行してください。" if archive else ""
+                    raise ValueError(f"{failures}件を復旧できませんでした。起動ファイルは切り替えていません。{retry}")
+            install_runtime(root, config)
             print(f"起動ファイル: {root / 'student-lab'}")
             return
     sys.stdout.flush()
@@ -445,9 +518,19 @@ def main():
     os.execvp(docker[0], [*docker, "exec", *flags, name, "bash"])
 
 
+def error_detail(error):
+    if isinstance(error, subprocess.CalledProcessError):
+        detail = error.stderr.strip() if error.stderr else f"外部コマンドが終了コード {error.returncode} で失敗しました。直前の出力を確認してください。"
+    else:
+        detail = str(error)
+    for key in ("http_proxy", "https_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"):
+        if value := os.environ.get(key):
+            detail = detail.replace(value, "[proxy]")
+    return detail
+
+
 if __name__ == "__main__":
     try:
         main()
-    except (ValueError, OSError, subprocess.CalledProcessError, tarfile.TarError) as error:
-        detail = error.stderr.strip() if isinstance(error, subprocess.CalledProcessError) and error.stderr else str(error)
-        sys.exit(f"labctl: {detail}")
+    except (ValueError, OSError, EOFError, subprocess.CalledProcessError, tarfile.TarError, zlib.error) as error:
+        sys.exit(f"labctl: {error_detail(error)}")
