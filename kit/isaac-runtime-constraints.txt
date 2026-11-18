@@ -1,0 +1,9 @@
+# Preserve the working combination for Isaac Sim 5.1 and Isaac Lab 2.3.
+torch==2.7.0+cu128
+torchvision==0.22.0+cu128
+tensordict==0.8.3
+pin==2.7.0
+click==8.1.7
+idna==3.10
+psutil==5.9.8
+wheel==0.45.1

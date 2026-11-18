@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+project=/workspace/mujina_isaac_lab
+[[ -f "$project/scripts/rsl_rl/train.py" ]] || project=/opt/mujina-source/mujina_isaac_lab
+export PYTHONPATH="$project/source/mujina_isaac_lab${PYTHONPATH:+:$PYTHONPATH}"
+cd "$project"
+case ${1:-} in
+  preview) script=/opt/mujina-source/preview.py ;;
+  train)   script=scripts/rsl_rl/train.py ;;
+  *) printf '使い方: mujina-isaac preview|train [オプション]\n' >&2; exit 2 ;;
+esac
+shift
+python=/opt/mujina-isaac/bin/python
+kit_home="$HOME/.local/share/mujina-isaac"
+mkdir -p -- "$kit_home"
+kit_args="--kit_args=--portable-root $kit_home"
+for option in "$@"; do
+  if [[ $option == --headless || $option == --help || $option == -h ]]; then
+    exec "$python" "$script" "$kit_args" "$@"
+  fi
+done
+export __NV_PRIME_RENDER_OFFLOAD=1
+exec mujina-display "$python" "$script" "$kit_args" "$@"

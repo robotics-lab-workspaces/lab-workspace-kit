@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Lab Workspace Kit ガイド</title>
+  <style>
+    :root {
+      --ink: #172c35;
+      --muted: #4c626b;
+      --accent: #086053;
+      --line: #d6e1e1;
+      --paper: #f7faf9;
+      --white: #fff;
+      --code: #12262f;
+      --code-text: #e5f4f1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans CJK JP", sans-serif;
+      line-height: 1.75;
+    }
+    a { color: var(--accent); text-underline-offset: .22em; }
+    a:focus-visible, button:focus-visible, summary:focus-visible {
+      outline: 3px solid #bd7623;
+      outline-offset: 3px;
+    }
+    code, pre { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    :not(pre) > code {
+      padding: .1em .3em;
+      border-radius: .25rem;
+      background: #e8f0ef;
+      overflow-wrap: anywhere;
+    }
+    .wrap { width: min(100% - 3rem, 74rem); margin-inline: auto; }
+    header { background: #112c33; color: var(--white); }
+    header .wrap { padding-block: clamp(2.4rem, 6vw, 5rem) 2.25rem; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: .7rem; font-size: clamp(1.85rem, 5vw, 3.35rem); line-height: 1.22; }
+    header p { max-width: 42rem; margin-bottom: 0; color: #c8e1dc; }
+    .layout { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: clamp(1.5rem, 5vw, 4rem); }
+    nav { align-self: start; position: sticky; top: 1.5rem; padding-block: 2.25rem; }
+    nav ul { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
+    nav a { display: block; padding: .36rem .75rem; color: var(--muted); text-decoration: none; font-size: .92rem; }
+    nav a:hover { background: #e8f0ef; color: var(--accent); }
+    main { min-width: 0; padding-block: 2.25rem 3.75rem; }
+    section { scroll-margin-top: 1.25rem; padding-bottom: 2rem; margin-bottom: 2rem; border-bottom: 1px solid var(--line); }
+    section:last-child { margin-bottom: 0; }
+    h2 { margin-bottom: .85rem; font-size: clamp(1.35rem, 3vw, 1.85rem); line-height: 1.35; }
+    h3 { margin-block: 1.4rem .45rem; font-size: 1.02rem; }
+    p, ol, ul { margin-bottom: .85rem; }
+    .note { border-left: 3px solid var(--accent); background: #eaf3f1; padding: .65rem .9rem; }
+    .warning { border-left: 3px solid #9a511a; background: #f9efe1; padding: .65rem .9rem; }
+    .command { margin: .75rem 0 1.15rem; overflow: hidden; border-radius: .65rem; background: var(--code); color: var(--code-text); }
+    .command-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .4rem 1rem; padding: .46rem .8rem; background: #1b3740; }
+    .command-label { font-size: .78rem; color: #d4e8e5; }
+    .copy { display: none; }
+    .js .copy {
+      display: inline-block;
+      min-width: 6.5rem;
+      padding: .28rem .55rem;
+      border: 1px solid #72959a;
+      border-radius: .35rem;
+      background: #234650;
+      color: var(--white);
+      font: inherit;
+      font-size: .78rem;
+      cursor: pointer;
+    }
+    .copy:hover { background: #32565f; }
+    pre { margin: 0; padding: .74rem .9rem .88rem; overflow-x: auto; font-size: clamp(.78rem, 2vw, .9rem); line-height: 1.6; tab-size: 2; }
+    .route { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-block: .85rem; }
+    .route div { background: var(--white); border: 1px solid var(--line); border-radius: .6rem; padding: .7rem .9rem; }
+    .route dt { font-weight: 700; }
+    .route dd { margin: .25rem 0 0; }
+    table { border-collapse: collapse; width: 100%; font-size: .94rem; }
+    th, td { padding: .6rem .65rem; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+    thead th { background: #eaf3f1; }
+    tbody th { min-width: 4.5rem; }
+    details { padding: .35rem .7rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--white); margin-top: .65rem; }
+    summary { cursor: pointer; padding: .3rem .1rem; font-weight: 650; }
+    details p { margin: .35rem .1rem .45rem; }
+    .small { font-size: .88rem; color: var(--muted); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    @media (max-width: 52rem) {
+      .layout { display: block; }
+      nav { position: static; padding-block: 1rem 0; }
+      nav ul { display: flex; flex-wrap: wrap; gap: .2rem .45rem; border-left: 0; }
+      nav a { padding: .28rem .44rem; text-decoration: underline; }
+      main { padding-top: 1.35rem; }
+    }
+    @media (max-width: 34rem) {
+      .wrap { width: calc(100% - 1.5rem); }
+      .route { grid-template-columns: 1fr; }
+      th, td { padding-inline: .35rem; }
+    }
+    .workflow { margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: .65rem; }
+    .workflow figcaption { font-weight: 700; margin-bottom: .6rem; }
+    .flow-steps { display: grid; gap: 1.1rem; list-style: none; margin: .75rem 0 0; padding: 0; }
+    .flow-steps li, .flow-output { position: relative; border: 1px solid var(--line); border-radius: .4rem; padding: .55rem .8rem; overflow-wrap: anywhere; }
+    .flow-steps li { background: #edf5f2; color: #192e29; }
+    .flow-steps strong, .flow-output strong { display: block; }
+    .flow-arrow { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); line-height: 1.1rem; }
+    .flow-results { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); padding-top: 1rem; gap: .65rem; position: relative; }
+    .flow-results::before { content: ""; position: absolute; top: 0; left: 50%; height: .55rem; border-left: 1px solid currentColor; }
+    .flow-output::before { content: ""; position: absolute; bottom: 100%; height: .45rem; width: calc(50% + .34rem); border-top: 1px solid currentColor; }
+    .flow-output:first-child::before { left: 50%; border-left: 1px solid currentColor; }
+    .flow-output:last-child::before { right: 50%; border-right: 1px solid currentColor; }
+    @media (max-width: 34rem) { .flow-output { padding: .4rem; } }
+    @media print {
+      header { background: var(--white); color: var(--ink); }
+      header p { color: var(--muted); }
+      nav, .js .copy { display: none; }
+      .layout { display: block; }
+      .command, .command-bar { background: var(--white); color: var(--ink); border: 1px solid var(--line); }
+      .command-label { color: var(--ink); }
+      .command { break-inside: avoid; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Lab Workspace Kit ガイド</h1>
+      <p>Ubuntuでシミュレーターを開く、学習を回す、学習済みポリシーの動きを見る。</p>
+    </div>
+  </header>
+  <div class="wrap layout">
+    <nav aria-label="このページの目次">
+      <ul>
+        <li><a href="#first">全体図・端末の使い方</a></li>
+        <li><a href="#setup">新規セットアップと復旧</a></li>
+        <li><a href="#start">Dockerで起動</a></li>
+        <li><a href="#train">学習</a></li>
+        <li><a href="#play">ポリシー再生</a></li>
+        <li><a href="#tensorboard">TensorBoard</a></li>
+        <li><a href="#lifecycle">作成・停止・復旧</a></li>
+        <li><a href="#native">Ubuntuに直接入れた環境</a></li>
+        <li><a href="#resources">稼働状況・GPU・CPU</a></li>
+        <li><a href="#protected">触ってはいけない場所</a></li>
+        <li><a href="#troubleshooting">トラブルの切り分け</a></li>
+      </ul>
+    </nav>
+    <main>
+      <section id="first">
+        <h2>はじめに</h2>
+        <figure class="workflow">
+          <figcaption>作業の流れと、結果を見る2つの方法</figcaption>
+          <ol class="flow-steps" role="list">
+            <li><strong>Ubuntuデスクトップ</strong>ターミナルを開き、student-lab に作業名とGPU番号を指定する。<span class="flow-arrow" aria-hidden="true">↓</span></li>
+            <li><strong>Dockerコンテナ</strong>自分の作業環境に入り、作業フォルダー /workspace を使う。<span class="flow-arrow" aria-hidden="true">↓</span></li>
+            <li><strong>Isaac Labで学習</strong>シミュレーションの中でMuJinaの動かし方を学習する。<span class="flow-arrow" aria-hidden="true">↓</span></li>
+            <li><strong>結果を保存</strong>実行日時の付いたフォルダーにモデルと学習ログができる。</li>
+          </ol>
+          <div class="flow-results">
+            <div class="flow-output"><strong>モデル（.pt）</strong><a href="#play">Isaac Simで再生</a>して、動きを見る。</div>
+            <div class="flow-output"><strong>学習ログ</strong><a href="#tensorboard">TensorBoardでグラフを開く</a>と、学習の経過が分かる。</div>
+          </div>
+        </figure>
+        <p>まず公式モデルの歩行を見たい場合は、<a href="#start">GPUコンテナに入る</a>ところまで進み、<a href="#play">同梱モデルの再生</a>を実行してください。自分で学習する手順は後から試せます。</p>
+        <h3>いま、どこに入力する？</h3>
+        <p>Ubuntuデスクトップで <kbd>Ctrl+Alt+T</kbd> を押すとターミナルが開きます。入力待ちのときに表示される文字列を「プロンプト」と呼びます。各コマンドの上のラベルと、今のプロンプトを見比べてください。</p>
+        <dl class="route">
+          <div><dt>Ubuntuのターミナル（ホスト）</dt><dd><code>labadmin@…$</code><br>Ubuntuホスト側です。ここで作業環境を開きます。</dd></div>
+          <div><dt>コンテナ内のターミナル</dt><dd><code>lab@mujina-gpu0-student01:/workspace$</code><br>student01のGPU 0環境に入ったときの例です。ここで学習・再生します。</dd></div>
+        </dl>
+        <p>「コピー」を押し、ターミナルをクリックして <kbd>Ctrl+Shift+V</kbd> で貼り付け、<kbd>Enter</kbd> で実行します。プロンプトや末尾の <code>$</code> は入力不要です。次のコマンドはプロンプトが戻ってから入力します。<code>sudo</code> がパスワードを求めたら、文字が表示されなくてもそのまま入力し、<kbd>Enter</kbd> を押します。</p>
+        <details><summary>フォルダーの場所を確認するには</summary>
+          <p><code>~</code> は現在のユーザーのホームフォルダーです。コンテナ内の <code>/workspace</code> は作業ファイルの置き場所です。コンテナで <code>pwd</code> を実行すると今いる場所が表示され、<code>ls</code> でその中身を確認できます。<code>cd /workspace</code> で作業フォルダーに移動できます。</p>
+          <p>実行中の学習や再生を止めるには、そのターミナルで <kbd>Ctrl+C</kbd> を押します。プロンプトが戻った状態で <code>exit</code> を実行するとコンテナからUbuntu側へ戻ります。</p>
+        </details>
+      </section>
+
+      <section id="setup">
+        <h2>新規セットアップと復旧</h2>
+        <p>Ubuntu 24.04にDocker EngineとPython 3.12以上を用意すると、対話CLIで共有環境を準備できます。GPU版の条件とライセンスは<a href="README.md">README</a>を先に確認します。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · 取得と対話メニュー</span><button class="copy" type="button" data-copy="cmd-setup-kit">コピー</button></div>
+          <pre><code id="cmd-setup-kit">git clone https://github.com/robotics-lab-workspaces/lab-workspace-kit.git &amp;&amp;
+cd lab-workspace-kit &amp;&amp;
+./labctl</code></pre>
+        </div>
+        <p>共通ファイルやコンテナが壊れたときは、クローン先で次を実行します。<code>~/agent-lab/students</code> の作業フォルダーと設定を見つけて、同じ作業名に接続します。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · 残っている作業データから復旧</span><button class="copy" type="button" data-copy="cmd-repair-kit">コピー</button></div>
+          <pre><code id="cmd-repair-kit">./labctl repair</code></pre>
+        </div>
+        <p class="small">別の場所からの復旧や、バックアップからの復元は<a href="README.md#復旧">READMEの復旧手順</a>を使います。</p>
+      </section>
+
+      <section id="start">
+        <h2>Dockerで起動</h2>
+        <p>Ubuntuデスクトップのターミナルで、自分の作業名を指定します。<code>student01</code> は例です。最初にDockerへ入れば、Isaac SimやMuJoCoは普段どおりUbuntuにウィンドウを開きます。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuのターミナル · GPU 0</span><button class="copy" type="button" data-copy="cmd-start" aria-label="GPU環境の起動コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-start">~/agent-lab/student-lab student01 --gpu 0</code></pre>
+        </div>
+        <p>表示が <code>lab@mujina-gpu0-student01:/workspace$</code> に変わったら入室完了です。下の3つは目的に合わせて1つ選んでください。学習を試す場合は<a href="#train">学習手順</a>に進みます。</p>
+        <p class="small">GPU 1を使うときは <code>--gpu 1</code>、2枚をコンテナに割り当てるときは <code>--gpu all</code> を指定します。</p>
+        <h3>Isaac SimでMuJinaを表示</h3>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">コンテナ内 · GUI</span><button class="copy" type="button" data-copy="cmd-preview" aria-label="Isaacのプレビューコマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-preview">mujina-isaac preview</code></pre>
+        </div>
+        <p>プレビューは1体のモデルと物理をゼロ入力で確認するモードです。学習済みの歩行は<a href="#play">ポリシー再生</a>で見られます。</p>
+        <h3>MuJina ROSをMuJoCoで表示</h3>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">コンテナ内 · GUI</span><button class="copy" type="button" data-copy="cmd-ros" aria-label="MuJoCoの起動コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-ros">mujina-ros-sim</code></pre>
+        </div>
+        <h3>画面なしでIsaacの動作を確認</h3>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">コンテナ内 · 3ステップで終了</span><button class="copy" type="button" data-copy="cmd-headless" aria-label="画面なしの動作確認コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-headless">mujina-isaac preview --headless --steps 3</code></pre>
+        </div>
+        <p class="small">学習プロジェクトは <code>/workspace/mujina_isaac_lab</code> にあり、Ubuntu側の <code>~/agent-lab/students/作業名/workspace/</code> と共有されます。</p>
+      </section>
+
+      <section id="train">
+        <h2>学習</h2>
+        <p>まず8環境・1反復で、CUDA、モデル読み込み、保存を試せます。画面を出して試すときは、Ubuntuデスクトップから入り、最後の <code>--headless</code> を外します。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">コンテナ内 · 短い動作確認</span><button class="copy" type="button" data-copy="cmd-train" aria-label="短い学習のコマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-train">mujina-isaac train --task Isaac-Velocity-Rough-Mujina-v0 \
+  --num_envs 8 --max_iterations 1 --logger tensorboard --headless</code></pre>
+        </div>
+        <p>出力先は <code>/workspace/mujina_isaac_lab/logs/rsl_rl/</code> です。1反復のテストでは、チェックポイントと学習ログが作られることを確認できます。歩行を確認するときは、対象タスクで十分に学習したチェックポイントを選びます。</p>
+      </section>
+
+      <section id="play">
+        <h2>学習済みポリシーを再生</h2>
+        <p>UbuntuデスクトップからGPUコンテナに入り、次のコマンドを実行します。RT公式の学習済み歩行ポリシーを読み込み、Isaac SimでMuJina 1体に前進を指示します。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">コンテナ内 · 同梱ポリシーをGUIで再生</span><button class="copy" type="button" data-copy="cmd-play" aria-label="ポリシー再生コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-play">bash /workspace/policies/play-mujina.sh</code></pre>
+        </div>
+        <p>終了は起動したターミナルで <code>Ctrl+C</code>。スクリプトが見つからなければ、Ubuntuデスクトップから同じ作業名で <code>student-lab</code> に入り直してください。</p>
+        <h3>自分の学習結果を再生する</h3>
+        <p>同じ作業環境内のRough-MuJinaの学習結果を使います。下の例は保存先にあるチェックポイントを選んで、再生スクリプトに渡します。特定の回を選ぶ場合は、<code>checkpoint</code> にそのファイルの絶対パスを指定します。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">コンテナ内 · 自分のモデルをGUIで再生</span><button class="copy" type="button" data-copy="cmd-play-own">コピー</button></div>
+          <pre><code id="cmd-play-own">logs=/workspace/mujina_isaac_lab/logs/rsl_rl/mujina_rough
+checkpoint=$(find "$logs" -type f -name 'model_*.pt' 2&gt;/dev/null | sort -V | tail -n 1)
+if [ -n "$checkpoint" ]; then
+  bash /workspace/policies/play-mujina.sh "$checkpoint"
+else
+  printf '%s\n' 'この環境には学習結果がありません。'
+fi</code></pre>
+        </div>
+        <p><code>bash</code> が <code>play-mujina.sh</code> を起動します。最後に渡す <code>.pt</code> はモデルデータです。1反復の結果は、保存と読み込みの動作確認に使います。</p>
+        <details><summary>再生時にファイルのエラーが出たら</summary>
+          <p><code>cannot execute binary file</code> が出たら、<code>bash</code> の直後が <code>play-mujina.sh</code> のパスか確認します。<code>.pt</code> を直接実行しようとした場合は、上のコマンドをまとめて貼り直します。</p>
+          <p><code>No such file or directory</code> が出たら、指定した場所にファイルが見つかっていません。まず作業名を確認し、<code>/workspace</code> に目的のファイルが保存されているか確認します。自分の学習回は <code>ls /workspace/mujina_isaac_lab/logs/rsl_rl/mujina_rough/</code> で確認できます。</p>
+        </details>
+      </section>
+
+      <section id="tensorboard">
+        <h2>TensorBoardで学習グラフを見る</h2>
+        <p>学習中のターミナルはそのままにし、Ubuntuで <kbd>Ctrl+Alt+T</kbd> を押して2つ目を開きます。そこでも<a href="#start">同じ作業名・GPU番号の起動コマンド</a>を実行します。入室時に表示されるUbuntu側のURLを控え、コンテナのプロンプトに変わったら下のコマンドを実行します。TensorBoardは1コンテナにつき1つ起動し、グラフを見ている間はこの端末を開いたままにします。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">コンテナ内 · 既定の学習ログを読む</span><button class="copy" type="button" data-copy="cmd-board" aria-label="TensorBoardの起動コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-board">mujina-tensorboard</code></pre>
+        </div>
+        <dl class="route">
+          <div><dt>コンテナ内</dt><dd>各コンテナで <code>6006</code></dd></div>
+          <div><dt>Ubuntu側</dt><dd><code>http://localhost:32771</code> など</dd></div>
+        </dl>
+        <p>TensorFlowがインストールされていないという通知が出ても、TensorBoardが起動したら続けて構いません。入室時に控えたURLをUbuntuのブラウザーで開きます。Ubuntu側の番号はDockerが空きを選ぶため、コンテナごとに異なります。停止・再開で変わることもあります。</p>
+        <h3>Macから開く</h3>
+        <p>下の <code>32771</code> をUbuntuで表示された番号に置き換え、Macで実行します。そのままMacのブラウザーで <code>http://localhost:16006</code> を開きます。lab-host.example.org と labadmin は、接続先の管理者が指定する値に置き換えます。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Macのターミナル · SSH転送</span><button class="copy" type="button" data-copy="cmd-tunnel" aria-label="SSH転送コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-tunnel">ssh -N -L 16006:localhost:32771 labadmin@lab-host.example.org</code></pre>
+        </div>
+        <p class="small">Isaac Simの画面はUbuntuデスクトップ上のウィンドウです。この転送はTensorBoardのブラウザー画面に使います。 <a href="https://docs.docker.com/engine/network/port-publishing">Dockerのポート公開仕様</a></p>
+      </section>
+
+      <section id="lifecycle">
+        <h2>環境を作る・閉じる・戻す</h2>
+        <p>各コマンドの上に、実行する場所を表示しています。<code>labadmin@…</code> はUbuntuホスト、<code>lab@mujina-…</code> はコンテナ内です。<code>student01</code> を自分の作業名に置き換えてください。</p>
+        <h3>新規作成・同じ環境を開き直す</h3>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · 通常版の新規作成・再入室</span><button class="copy" type="button" data-copy="cmd-reopen" aria-label="通常版を作成または再開するコマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-reopen">~/agent-lab/student-lab student01</code></pre>
+        </div>
+        <p>GPU版は上の<a href="#start">起動例</a>のようにGPUを指定します。初回は作業環境が作られます。2回目以降は、同じ作業名とGPU指定で同じコンテナに戻ります。停止中なら起動してから入ります。</p>
+        <table>
+          <thead><tr><th scope="col">モード</th><th scope="col">起動時の指定</th><th scope="col">Ubuntu側のコンテナ名</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">通常版</th><td><code>student-lab student01</code></td><td><code>mujina-student-student01</code></td></tr>
+            <tr><th scope="row">GPU 0</th><td><code>--gpu 0</code></td><td><code>mujina-gpu0-student01</code></td></tr>
+            <tr><th scope="row">GPU 1</th><td><code>--gpu 1</code></td><td><code>mujina-gpu1-student01</code></td></tr>
+            <tr><th scope="row">GPU 2枚</th><td><code>--gpu all</code></td><td><code>mujina-gpuall-student01</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>画面やターミナルだけ閉じる</h3>
+        <p>シミュレーターやTensorBoardは、起動したターミナルで <kbd>Ctrl+C</kbd> を押すと終了できます。次にコンテナのシェルを閉じると、Ubuntu側のプロンプトに戻ります。コンテナは起動したままです。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">コンテナ内 · Ubuntuのプロンプトに戻る</span><button class="copy" type="button" data-copy="cmd-exit" aria-label="コンテナのシェルを閉じるコマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-exit">exit</code></pre>
+        </div>
+
+        <h3>コンテナを停止する・再起動する</h3>
+        <p>Ubuntuホスト側で、自分のコンテナ名を指定します。停止や再起動をすると、内部の学習・シミュレーター・TensorBoardも終了します。必要なチェックポイントを保存してから実行します。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · 自分のGPU 0版を停止</span><button class="copy" type="button" data-copy="cmd-stop" aria-label="自分のコンテナを停止するコマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-stop">sudo docker stop mujina-gpu0-student01</code></pre>
+        </div>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · 自分のGPU 0版を再起動して入り直す</span><button class="copy" type="button" data-copy="cmd-restart" aria-label="自分のコンテナを再起動するコマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-restart">sudo docker restart mujina-gpu0-student01 &amp;&amp;
+~/agent-lab/student-lab student01 --gpu 0</code></pre>
+        </div>
+        <p class="small">停止・再起動では、コンテナ内に追加したパッケージ、自分の作業ファイル、設定が残ります。TensorBoardは必要に応じて起動し直し、そのとき表示されたURLを使います。</p>
+
+        <h3>標準環境に戻す</h3>
+        <p>まっさらな標準環境で試すなら、未使用の作業名を指定します。元の環境には、元の作業名で戻れます。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · 別の新しい作業名を作る</span><button class="copy" type="button" data-copy="cmd-fresh" aria-label="別の標準環境を作るコマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-fresh">~/agent-lab/student-lab student01-clean --gpu 0</code></pre>
+        </div>
+        <details>
+          <summary>同じ作業名で、コンテナ本体だけ作り直す</summary>
+          <p class="warning">自分のコンテナ名を確認してから実行してください。コンテナに直接入れた <code>apt</code> パッケージや、永続フォルダの外に保存したファイルは消えます。</p>
+          <div class="command">
+            <div class="command-bar"><span class="command-label">Ubuntuホスト · 自分のGPU 0版だけを作り直す</span><button class="copy" type="button" data-copy="cmd-recreate" aria-label="自分のコンテナ本体を作り直すコマンドをコピー">コピー</button></div>
+            <pre><code id="cmd-recreate">sudo docker stop mujina-gpu0-student01 &amp;&amp;
+sudo docker rm mujina-gpu0-student01 &amp;&amp;
+~/agent-lab/student-lab student01 --gpu 0</code></pre>
+          </div>
+          <p><code>/workspace</code> のコード・学習ログと、同じモードの <code>/home/lab</code> の設定・認証はUbuntu側に保存されるので、同じ作業名で引き継がれます。コードも初期状態で試す場合は、別の作業名を使ってください。</p>
+        </details>
+      </section>
+
+      <section id="native">
+        <h2>Ubuntuに直接入れた環境</h2>
+        <p>Isaac Sim単体は、インストール方法に応じて次のいずれかで開きます。Isaac LabのMuJinaを動かす場合は、MuJinaプロジェクトの <code>train.py</code> または <code>play.py</code> を起点にします。</p>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuのターミナル · 公式の配布版を展開したフォルダ</span><button class="copy" type="button" data-copy="cmd-native-binary" aria-label="配布版Isaac Simの起動コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-native-binary">./isaac-sim.sh</code></pre>
+        </div>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuのターミナル · pip版を入れたPython環境</span><button class="copy" type="button" data-copy="cmd-native-pip" aria-label="pip版Isaac Simの起動コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-native-pip">isaacsim</code></pre>
+        </div>
+        <p class="small"><a href="https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/install_workstation.html">Isaac Sim配布版</a> · <a href="https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/install_python.html">Isaac Sim pip版</a> · <a href="https://isaac-sim.github.io/IsaacLab/v2.3.1/source/overview/reinforcement-learning/rl_existing_scripts.html">Isaac Labの学習と再生</a></p>
+      </section>
+
+      <section id="resources">
+        <h2>稼働状況・GPU・CPUを確認</h2>
+        <p>ここにあるコマンドはすべて、Ubuntuホストの <code>labadmin@…</code> で実行します。</p>
+        <h3>開いているコンテナと、現在のCPU・メモリ使用量</h3>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · 起動中の一覧と使用量</span><button class="copy" type="button" data-copy="cmd-status" aria-label="起動中の環境と使用量の確認コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-status">sudo docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+sudo docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}'</code></pre>
+        </div>
+        <p class="small">停止済みの環境も含める場合は <code>sudo docker ps -a</code>。<code>stats</code> のCPU欄は現在の使用率で、複数の論理CPUを使うと100%を超えます。</p>
+
+        <h3>GPUの割り当てを確認</h3>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · ホスト全体と、自分のコンテナから見えるGPU</span><button class="copy" type="button" data-copy="cmd-gpu-assignment" aria-label="GPU割り当ての確認コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-gpu-assignment">nvidia-smi --query-gpu=index,uuid,name,memory.total --format=csv
+sudo docker exec mujina-gpu0-student01 \
+  nvidia-smi --query-gpu=index,uuid,name,memory.total --format=csv</code></pre>
+        </div>
+        <p class="small">2行目の一覧が、そのコンテナから使えるGPUです。ホストでGPU 1を渡してもコンテナ内ではGPU 0と表示される場合があるので、両方の <code>UUID</code> を照合します。通常版はGPU割り当てなしです。</p>
+
+        <h3>CPUとRAMの割り当て上限を確認</h3>
+        <div class="command">
+          <div class="command-bar"><span class="command-label">Ubuntuホスト · 全体容量と、自分のコンテナの実際の上限</span><button class="copy" type="button" data-copy="cmd-cpu-assignment" aria-label="CPUとRAMの上限確認コマンドをコピー">コピー</button></div>
+          <pre><code id="cmd-cpu-assignment">nproc
+free -h
+sudo docker exec mujina-gpu0-student01 sh -c '
+  printf "CPU quota: "; cat /sys/fs/cgroup/cpu.max
+  printf "CPU IDs: "; cat /sys/fs/cgroup/cpuset.cpus.effective
+  printf "Memory bytes: "; cat /sys/fs/cgroup/memory.max
+'</code></pre>
+        </div>
+        <p class="small"><code>CPU quota</code> が <code>max</code> の場合、CPU時間の上限は設定されていません。<code>CPU IDs</code> は使える論理CPU番号、<code>Memory bytes</code> はRAMの上限です。既定の上限は通常版24 GiB、GPU版64 GiBです。</p>
+      </section>
+
+      <section id="protected">
+        <h2>学生が触ってはいけない場所</h2>
+        <p class="warning">普段の編集は自分の <code>/workspace</code> の中で行います。停止・再起動・作り直しの対象は、自分のコンテナ名を一覧で確認してから指定してください。</p>
+        <table>
+          <thead><tr><th scope="col">対象</th><th scope="col">守ること</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">ほかの人の環境</th><td><code>~/agent-lab/students/他の作業名/</code> のコード・学習ログ・認証と、他の人のコンテナは触らない。停止や削除も本人に任せます。</td></tr>
+            <tr><th scope="row">共通の起動設定</th><td><code>~/agent-lab/student-lab</code>、<code>~/agent-lab/compose*.yaml</code>、<code>~/agent-lab/mujina-image/</code> は共用環境全体に関わります。実験コードは、自分の作業フォルダにあるコピーを編集します。</td></tr>
+            <tr><th scope="row">UbuntuとDockerの管理領域</th><td><code>/etc/docker/</code>、<code>/etc/cdi/</code>、<code>/var/lib/docker/</code>、GPUドライバー、ネットワーク設定は管理担当者が扱います。Docker全体を消す・止めるコマンドや <code>docker system prune</code> は使いません。</td></tr>
+            <tr><th scope="row">実機・認証情報</th><td>シミュレーション作業中は、実機CAN・制御ノード・実機接続を触りません。SSH鍵、パスワード、APIキー、X11認証は作業ログやGitに貼りません。</td></tr>
+          </tbody>
+        </table>
+        <p class="small">共通設定に問題を見つけたときは、実行したコマンド、エラー、自分のコンテナ名を共有ルールに沿って管理担当者に伝えます。</p>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>トラブルの切り分け</h2>
+        <details>
+          <summary>Isaacのウィンドウが出ない</summary>
+          <p>Ubuntuデスクトップのターミナルから <code>student-lab</code> に入り直して、<code>mujina-isaac preview</code> を実行します。初回は描画キャッシュの準備に時間がかかります。</p>
+        </details>
+        <details>
+          <summary>ウィンドウは出たがロボットが歩かない</summary>
+          <p>プレビューはゼロ入力です。対応する学習済み <code>.pt</code> を使う<a href="#play">再生手順</a>を確認します。</p>
+        </details>
+        <details>
+          <summary>TensorBoardが開かない、グラフが空</summary>
+          <p>「6006 already in use」（ポート6006は使用中）と表示され、同じコンテナでTensorBoardを起動済みなら、入室時に表示されたUbuntu側のURLをブラウザーで開くと、そのTensorBoardを利用できます。</p>
+          <p>同じ作業環境で <code>mujina-tensorboard</code> が動いていることを確認します。URLは今回表示されたものを使います。画面が開いてグラフが空なら、<code>/workspace/mujina_isaac_lab/logs</code> に学習のイベントファイルがあるか確認します。</p>
+        </details>
+        <details>
+          <summary>CUDAエラーや Resource temporarily unavailable が出る</summary>
+          <p>まずコンテナ内でGPUが見えているか確認します。<code>pids.events</code> の <code>max</code> が繰り返し増える場合、プロセス・スレッド上限に達しています。GPU版の上限は2048です。Isaacの詳細ログは <code>~/.local/share/mujina-isaac/logs/</code> にあります。</p>
+          <div class="command">
+            <div class="command-bar"><span class="command-label">コンテナ内 · GPUとプロセス上限</span><button class="copy" type="button" data-copy="cmd-diagnose" aria-label="GPUとプロセス上限の確認コマンドをコピー">コピー</button></div>
+            <pre><code id="cmd-diagnose">nvidia-smi -L
+cat /sys/fs/cgroup/pids.max /sys/fs/cgroup/pids.events</code></pre>
+          </div>
+        </details>
+        <p class="small">作業メモは自分の <code>/workspace/WORKLOG.md</code> へ。共有ルールは <code>/workspace/AGENTS.md</code>、環境の再ビルド手順は <code>~/agent-lab/mujina-image/README.md</code> にあります。</p>
+      </section>
+    </main>
+  </div>
+  <div class="sr-only" id="copy-status" role="status" aria-live="polite"></div>
+  <script>
+    document.documentElement.classList.add('js');
+    const status = document.getElementById('copy-status');
+    const resetTimers = new WeakMap();
+    document.addEventListener('click', async (event) => {
+      const button = event.target.closest('button[data-copy]');
+      if (!button) return;
+
+      const code = document.getElementById(button.dataset.copy);
+      if (!code) return;
+
+      const command = code.textContent.trim();
+      let copied = false;
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(command);
+          copied = true;
+        } catch {
+          // Local or restricted browser contexts may require the selection fallback.
+        }
+      }
+      if (!copied) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        try {
+          copied = document.execCommand('copy');
+        } catch {
+          // Preserve the selection so the command can be copied with the keyboard.
+        }
+        if (copied) selection.removeAllRanges();
+      }
+
+      const message = copied ? 'コピーしました' : '選択済み · Ctrl/⌘+C';
+      button.textContent = message;
+      status.textContent = message;
+      clearTimeout(resetTimers.get(button));
+      resetTimers.set(button, setTimeout(() => {
+        button.textContent = 'コピー';
+      }, 2200));
+    });
+  </script>
+</body>
+</html>

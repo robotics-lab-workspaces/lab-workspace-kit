@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+if [[ -s "$HOME/.mujina-display" && -s "$HOME/.mujina-xauthority" ]]; then
+  export DISPLAY
+  DISPLAY=$(<"$HOME/.mujina-display")
+  export XAUTHORITY="$HOME/.mujina-xauthority"
+fi
+if [[ -z ${DISPLAY:-} ]] || ! xdpyinfo >/dev/null 2>&1; then
+  printf 'Ubuntuデスクトップの端末から student-lab に入り直してください。\n' >&2
+  exit 1
+fi
+exec "$@"

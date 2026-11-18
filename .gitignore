@@ -1,0 +1,11 @@
+/.lab-kit/
+/students/
+/.env
+/*.local.env
+/student-lab
+/backups/
+*.tar.gz
+*.pt
+*.onnx
+*.usd
+__pycache__/

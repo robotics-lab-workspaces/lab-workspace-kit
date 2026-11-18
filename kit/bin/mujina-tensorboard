@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+logs=${1:-/workspace/mujina_isaac_lab/logs}
+mkdir -p -- "$logs"
+exec /opt/mujina-isaac/bin/tensorboard --logdir "$logs" --host 0.0.0.0 --port 6006

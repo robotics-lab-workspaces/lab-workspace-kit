@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+source /opt/ros/jazzy/setup.bash
+source /opt/mujina-ros/setup.bash
+python=/opt/mujina-ros-python/bin/python
+simulator=/opt/mujina-ros/lib/mujina_control/mujina_main
+project=/workspace/mujina_ros
+[[ -f "$project/mujina_control/models/scene.xml" ]] || project=/opt/mujina-source/mujina_ros
+work="$HOME/.local/share/mujina-ros"
+mkdir -p "$work/src"
+ln -sfnT -- "$project" "$work/src/mujina_ros"
+cd "$work"
+export PYTHONPATH="$project/mujina_control${PYTHONPATH:+:$PYTHONPATH}"
+if [[ ${1:-} == --headless ]]; then
+  shift
+  exec xvfb-run -a -s '-screen 0 1280x720x24' "$python" "$simulator" --sim "$@"
+fi
+export __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia
+exec mujina-display "$python" "$simulator" --sim "$@"

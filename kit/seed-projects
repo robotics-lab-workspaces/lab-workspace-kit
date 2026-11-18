@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+for project in mujina_ros mujina_isaac_lab; do
+  if [[ -d /opt/mujina-source/$project && ! -e /workspace/$project && ! -L /workspace/$project ]]; then
+    stage=$(mktemp -d /workspace/.seed.XXXXXXXX)
+    trap 'rm -rf -- "$stage"' EXIT
+    cp -a --no-preserve=ownership -- "/opt/mujina-source/$project" "$stage/"
+    mv --no-clobber --no-target-directory -- "$stage/$project" "/workspace/$project"
+    rm -rf -- "$stage"
+    trap - EXIT
+  fi
+done
